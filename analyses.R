@@ -969,6 +969,3 @@ PPCHECK_DF %>%
 
 
 ggsave("ppcheck.pdf", width = 9, height = 5, path = "~/Documents/MS_USA/Chapter_2/Figures")
-
-
-
