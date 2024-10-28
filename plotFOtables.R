@@ -2,6 +2,8 @@ library(forcats)
 library(flextable)
 library(readr)
 
+# correct this script. Use code from observations in 'analysis'
+
 rawData <- read_csv("~/Documents/MS_USA/Chapter_2/Data/rawData.csv", skip = 1)
 
 LAGRHO = rawData %>%
@@ -136,3 +138,69 @@ MICUND_FOtable = flextable(
 MICUND_FOtable
 
 save_as_docx(MICUND_FOtable, path = "~/Documents/MS_USA/Chapter_2/Tables/MICUND_FO_table.docx")
+
+#-------------------------------------------------------------------------------
+
+
+BAICHR = rawData %>%
+  filter(`Species code` == "BAICHR") %>%
+  group_by(`Fish ID`,Year, Treatment, Group, Length, Site) %>%
+  filter(Group %in% c('Amphipod', 'Crustacean',
+                      'Polychaete', 'Isopod', 'Fish', 'Tanaidacea')) %>%
+  summarise(count = n()) %>%
+  pivot_wider(names_from = Group,
+              values_from = count,
+              values_fill = 0)
+
+BAICHR$siteTreat = factor(interaction(BAICHR$Site, BAICHR$Treatment, sep = "-"))
+
+
+BAICHRdf = data.frame(BAICHR$siteTreat, BAICHR$Length,
+                       BAICHR$Amphipod, BAICHR$Polychaete, BAICHR$Crustacean,
+                       BAICHR$Fish, BAICHR$Tanaidacea, BAICHR$Isopod)
+names(BAICHRdf) = c('site', 'TL', 'Amphipod', 'Polychaete', 'Crustacean', 'Fish',
+                    'Tanaidacea', 'Isopod')
+
+BAICHRdf = BAICHRdf %>%
+  group_by(site) %>%
+  filter(site %in% c("CI-CT", "NEPaP-CT", "NEPaP-LS", "SA-LS")) %>%
+  summarize(TL_range = paste(min(TL, na.rm = T), max(TL, na.rm = T), sep = "-"),
+            mean_TL    = paste(round(mean(TL, na.rm = T),1)),
+            Amphipod   = sum(Amphipod),
+            Polychaete = sum(Polychaete),
+            Crustacean = sum(Crustacean),
+            Fish       = sum(Fish),
+            Tanaidacae = sum(Tanaidacea),
+            Isopod     = sum(Isopod)) %>%
+  mutate(N = paste(rowSums(.[4:9])), .after = "mean_TL") %>%
+  mutate(site = fct_recode(site,
+                           "CI-C" = "CI-CT",
+                           "PaP-C" = "NEPaP-CT",
+                           "PaP-R" = "NEPaP-LS",
+                           "SA-R" = "SA-LS"
+  ))
+
+BAICHRrawMat = as.matrix(BAICHRdf[,5:10])
+
+BAICHRmat = matrix(NA, nrow = nrow(BAICHRrawMat), ncol = ncol(BAICHRrawMat))
+for (i in 1:(nrow(BAICHRmat))) {
+  for (j in 1:(ncol(BAICHRmat))) {
+    BAICHRmat[i,j] = (BAICHRrawMat[i,j]/as.numeric(BAICHRdf$N[i]))*100
+  }
+}
+
+BAICHRdf = data.frame(cbind(BAICHRdf[,1:4], round(BAICHRmat,1)))
+names(BAICHRdf) = c("Site", "Size range", "Mean size", "N", 'Amphipod', 'Polychaete', 'Crustacean', 'Fish',
+                    'Tanaidacea', 'Isopod')
+
+BAICHR_FOtable = flextable(
+  data     = BAICHRdf,
+  col_keys = c("Site", "Size range", "Mean size", "N", 'Amphipod', 'Polychaete', 'Crustacean', 'Fish',
+               'Tanaidacea', 'Isopod')) %>%
+  colformat_num(suffix = "%") %>%
+  bold(part = "header", bold = TRUE) %>%
+  align(align = "center", part = "all")
+
+BAICHR_FOtable
+
+save_as_docx(BAICHR_FOtable, path = "~/Documents/MS_USA/Chapter_2/Tables/BAICHR_FO_table.docx")

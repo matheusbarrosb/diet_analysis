@@ -6,6 +6,9 @@ library(tidyr)
 library(ggplot2)
 library(cowplot)
 library(ggpubr)
+library(forcats)
+library(flextable)
+library(tibble)
 
 setwd("~/Documents/MS_USA/Chapter_2/Code")
 
@@ -42,13 +45,21 @@ for (j in 1:ncol(preyMat)) {
 # Parameters to extract: p[1], p[3], p[6], p[7], p[10], p[11], p[12] 
 LAGRHO$siteTreat = factor(interaction(LAGRHO$Site, LAGRHO$Treatment, sep = "-"))
 
+
+# GET MEAN SIZE PER SITE
+meanTLs_LAGRHO = LAGRHO %>%
+  group_by(siteTreat) %>%
+  summarise(meanTLs = mean(Length, na.rm = TRUE))
+
+
 ## MAKE STAN DATA
 LAGRHO_amphipod = list(
-  N    = length(LAGRHO$`Fish ID`), # number of observations
-  S    = length(unique(LAGRHO$siteTreat)),
-  site = as.numeric(as.factor(LAGRHO$siteTreat)),
-  TL   = as.numeric(LAGRHO$Length),
-  y    = as.numeric(preyMat[,1])
+  N       = length(LAGRHO$`Fish ID`), # number of observations
+  S       = length(unique(LAGRHO$siteTreat)),
+  site    = as.numeric(as.factor(LAGRHO$siteTreat)),
+  TL      = as.numeric(LAGRHO$Length),
+  y       = as.numeric(preyMat[,1]),
+  meanTLs = meanTLs_LAGRHO$meanTLs
 )
 
 LAGRHO_polychaete = list(
@@ -56,7 +67,8 @@ LAGRHO_polychaete = list(
   S    = length(unique(LAGRHO$siteTreat)),
   site = as.numeric(as.factor(LAGRHO$siteTreat)),
   TL   = as.numeric(LAGRHO$Length),
-  y    = as.numeric(preyMat[,2])
+  y    = as.numeric(preyMat[,2]),
+  meanTLs = meanTLs_LAGRHO$meanTLs
 )
 
 LAGRHO_crustacean = list(
@@ -64,7 +76,8 @@ LAGRHO_crustacean = list(
   S    = length(unique(LAGRHO$siteTreat)),
   site = as.numeric(as.factor(LAGRHO$siteTreat)),
   TL   = as.numeric(LAGRHO$Length),
-  y    = as.numeric(preyMat[,3])
+  y    = as.numeric(preyMat[,3]),
+  meanTLs = meanTLs_LAGRHO$meanTLs
 )
 
 LAGRHO_fish = list(
@@ -72,7 +85,8 @@ LAGRHO_fish = list(
   S    = length(unique(LAGRHO$siteTreat)),
   site = as.numeric(as.factor(LAGRHO$siteTreat)),
   TL   = as.numeric(LAGRHO$Length),
-  y    = as.numeric(preyMat[,4])
+  y    = as.numeric(preyMat[,4]),
+  meanTLs = meanTLs_LAGRHO$meanTLs
 )
 
 LAGRHO_tanaid = list(
@@ -80,7 +94,8 @@ LAGRHO_tanaid = list(
   S    = length(unique(LAGRHO$siteTreat)),
   site = as.numeric(as.factor(LAGRHO$siteTreat)),
   TL   = as.numeric(LAGRHO$Length),
-  y    = as.numeric(preyMat[,5])
+  y    = as.numeric(preyMat[,5]),
+  meanTLs = meanTLs_LAGRHO$meanTLs
 )
 
 LAGRHO_SAV = list(
@@ -88,7 +103,8 @@ LAGRHO_SAV = list(
   S    = length(unique(LAGRHO$siteTreat)),
   site = as.numeric(as.factor(LAGRHO$siteTreat)),
   TL   = as.numeric(LAGRHO$Length),
-  y    = as.numeric(preyMat[,6])
+  y    = as.numeric(preyMat[,6]),
+  meanTLs = meanTLs_LAGRHO$meanTLs
 )
 
 LAGRHO_isopod = list(
@@ -96,50 +112,51 @@ LAGRHO_isopod = list(
   S    = length(unique(LAGRHO$siteTreat)),
   site = as.numeric(as.factor(LAGRHO$siteTreat)),
   TL   = as.numeric(LAGRHO$Length),
-  y    = as.numeric(preyMat[,7])
+  y    = as.numeric(preyMat[,7]),
+  meanTLs = meanTLs_LAGRHO$meanTLs
 )
 
 #### RUNNING MODELS ##------------------------------------------------------------
 LAGRHO_amphipod_res = rstan::stan(file   = "stan/logitReg.stan",
                                   data   = LAGRHO_amphipod,
-                                  warmup = 1000,
-                                  iter   = 5000,
+                                  warmup = 500,
+                                  iter   = 3000,
                                   chains = 2)
 
 LAGRHO_polychaete_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = LAGRHO_polychaete,
-                                    warmup = 1000,
-                                    iter   = 5000,
+                                    warmup = 500,
+                                    iter   = 3000,
                                     chains = 2)
 
 LAGRHO_crustacean_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = LAGRHO_crustacean,
-                                    warmup = 1000,
-                                    iter   = 5000,
+                                    warmup = 500,
+                                    iter   = 3000,
                                     chains = 2)
 
 LAGRHO_fish_res = rstan::stan(file   = "stan/logitReg.stan",
                               data   = LAGRHO_fish,
-                              warmup = 1000,
-                              iter   = 5000,
+                              warmup = 500,
+                              iter   = 3000,
                               chains = 2)
 
 LAGRHO_tanaid_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = LAGRHO_tanaid,
-                                warmup = 1000,
+                                warmup = 500,
                                 iter   = 5000,
                                 chains = 2)
 
-LAGRHO_SAV_res = rstan::stan(file    = "stan/logitReg.stan",
+LAGRHO_SAV_res = rstan::stan(file   = "stan/logitReg.stan",
                              data   = LAGRHO_SAV,
-                             warmup = 1000,
-                             iter   = 5000,
+                             warmup = 500,
+                             iter   = 3000,
                              chains = 2)
 
 LAGRHO_isopod_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = LAGRHO_isopod,
-                                warmup = 1000,
-                                iter   = 5000,
+                                warmup = 500,
+                                iter   = 3000,
                                 chains = 2)
 
 #### EXTRACTING PARAMETERS -----------------------------------------------------
@@ -308,21 +325,29 @@ head(preyMat)
 # To extract: p[1], p[4], p[7], p[8]
 MICUND$siteTreat = factor(interaction(MICUND$Site, MICUND$Treatment, sep = "-"))
 
+
+# GET MEAN SIZE PER SITE
+meanTLs_MICUND = MICUND %>%
+  group_by(siteTreat) %>%
+  summarise(meanTLs = mean(Length, na.rm = TRUE))
+
 ## MAKE STAN DATA
 MICUND_amphipod = list(
-  N    = length(MICUND$`Fish ID`), # number of observations
-  S    = length(unique(MICUND$siteTreat)),
-  site = as.numeric(as.factor(MICUND$siteTreat)),
-  TL   = as.numeric(MICUND$Length),
-  y    = as.numeric(preyMat[,1])
+  N       = length(MICUND$`Fish ID`), # number of observations
+  S       = length(unique(MICUND$siteTreat)),
+  site    = as.numeric(as.factor(MICUND$siteTreat)),
+  TL      = as.numeric(MICUND$Length),
+  y       = as.numeric(preyMat[,2]),
+  meanTLs = meanTLs_MICUND$meanTLs
 )
 
 MICUND_crustacean = list(
-  N    = length(MICUND$`Fish ID`), # number of observations
-  S    = length(unique(MICUND$siteTreat)),
-  site = as.numeric(as.factor(MICUND$siteTreat)),
-  TL   = as.numeric(MICUND$Length),
-  y    = as.numeric(preyMat[,2])
+  N       = length(MICUND$`Fish ID`), # number of observations
+  S       = length(unique(MICUND$siteTreat)),
+  site    = as.numeric(as.factor(MICUND$siteTreat)),
+  TL      = as.numeric(MICUND$Length),
+  y       = as.numeric(preyMat[,3]),
+  meanTLs = meanTLs_MICUND$meanTLs
 )
 
 MICUND_polychaete = list(
@@ -330,7 +355,8 @@ MICUND_polychaete = list(
   S    = length(unique(MICUND$siteTreat)),
   site = as.numeric(as.factor(MICUND$siteTreat)),
   TL   = as.numeric(MICUND$Length),
-  y    = as.numeric(preyMat[,3])
+  y    = as.numeric(preyMat[,1]),
+  meanTLs = meanTLs_MICUND$meanTLs
 )
 
 MICUND_fish = list(
@@ -338,7 +364,8 @@ MICUND_fish = list(
   S    = length(unique(MICUND$siteTreat)),
   site = as.numeric(as.factor(MICUND$siteTreat)),
   TL   = as.numeric(MICUND$Length),
-  y    = as.numeric(preyMat[,4])
+  y    = as.numeric(preyMat[,5]),
+  meanTLs = meanTLs_MICUND$meanTLs
 )
 
 MICUND_isopod = list(
@@ -346,7 +373,8 @@ MICUND_isopod = list(
   S    = length(unique(MICUND$siteTreat)),
   site = as.numeric(as.factor(MICUND$siteTreat)),
   TL   = as.numeric(MICUND$Length),
-  y    = as.numeric(preyMat[,5])
+  y    = as.numeric(preyMat[,6]),
+  meanTLs = meanTLs_MICUND$meanTLs
 )
 
 MICUND_tanaid = list(
@@ -354,44 +382,45 @@ MICUND_tanaid = list(
   S    = length(unique(MICUND$siteTreat)),
   site = as.numeric(as.factor(MICUND$siteTreat)),
   TL   = as.numeric(MICUND$Length),
-  y    = as.numeric(preyMat[,6])
+  y    = as.numeric(preyMat[,4]),
+  meanTLs = meanTLs_MICUND$meanTLs
 )
 
 #### RUNNING MODELS ##------------------------------------------------------------
 MICUND_amphipod_res = rstan::stan(file   = "stan/logitReg.stan",
                                   data   = MICUND_amphipod,
-                                  warmup = 1000,
-                                  iter   = 5000,
+                                  warmup = 500,
+                                  iter   = 3000,
                                   chains = 2)
 
 MICUND_crustacean_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = MICUND_crustacean,
-                                    warmup = 1000,
-                                    iter   = 5000,
+                                    warmup = 500,
+                                    iter   = 3000,
                                     chains = 2)
 
 MICUND_polychaete_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = MICUND_polychaete,
-                                    warmup = 1000,
-                                    iter   = 5000,
+                                    warmup = 500,
+                                    iter   = 3000,
                                     chains = 2)
 
 MICUND_fish_res = rstan::stan(file   = "stan/logitReg.stan",
                               data   = MICUND_fish,
-                              warmup = 1000,
-                              iter   = 5000,
+                              warmup = 500,
+                              iter   = 3000,
                               chains = 2)
 
 MICUND_isopod_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = MICUND_isopod,
-                                warmup = 1000,
-                                iter   = 5000,
+                                warmup = 500,
+                                iter   = 3000,
                                 chains = 2)
 
 MICUND_tanaid_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = MICUND_tanaid,
-                                warmup = 1000,
-                                iter   = 5000,
+                                warmup = 500,
+                                iter   = 3000,
                                 chains = 2)
 
 #### EXTRACTING PARAMETERS -----------------------------------------------------
@@ -493,13 +522,28 @@ MICUND_PoE_PLOT
 
 #### PLOTTING SIZE RELATIONSHIPS -----------------------------------------------
 
+# significant slopes:
+# amphipods
+# polychaetes
+# fish
+# tanaids
+# other crustaceans
+
+micundPrey = list(
+  "Amphipods", "Polychaetes",
+  "Tanaids", "Other crustaceans"
+  )
+
+micundOutputs = list(
+  MICUND_amphipod_res,
+  MICUND_polychaete_res,
+  MICUND_tanaid_res,
+  MICUND_crustacean_res)
+
 ontoShift_MICUND_PLOT = plotOntoShifts(
-  outputs = list(MICUND_amphipod_res,
-                 MICUND_polychaete_res,
-                 MICUND_fish_res,
-                 MICUND_tanaid_res),
-  prey = list("Amphipods", "Polychaetes", "Fish", "Tanaids"),
-  minTL = min(MICUND$Length), maxTL = max(MICUND$Length),
+  outputs = micundOutputs,
+  prey    = micundPrey,
+  minTL   = min(MICUND$Length), maxTL = max(MICUND$Length),
   plotNcols = 4
 )
 
@@ -531,6 +575,12 @@ BAICHR$siteTreat = factor(interaction(BAICHR$Site, BAICHR$Treatment, sep = "-"))
 BAICHR = droplevels(BAICHR[!BAICHR$siteTreat == "SA-DG",])
 BAICHR = droplevels(BAICHR[!BAICHR$siteTreat == "CI-LS",])
 
+# GET MEAN SIZE PER SITE
+meanTLs_BAICHR = BAICHR %>%
+  group_by(siteTreat) %>%
+  summarise(meanTLs = mean(Length, na.rm = TRUE))
+
+
 ## GET PREY MATRIX
 preyMat = as.matrix(BAICHR[,6:ncol(BAICHR)])
 for (j in 1:ncol(preyMat)) {
@@ -547,7 +597,8 @@ BAICHR_crustacean = list(
   S    = length(unique(BAICHR$siteTreat)),
   site = as.numeric(as.factor(BAICHR$siteTreat)),
   TL   = as.numeric(BAICHR$Length),
-  y    = as.numeric(preyMat[,1])
+  y    = as.numeric(preyMat[,1]),
+  meanTLs = meanTLs_BAICHR$meanTLs
 )
 
 BAICHR_amphipod = list(
@@ -555,7 +606,8 @@ BAICHR_amphipod = list(
   S    = length(unique(BAICHR$siteTreat)),
   site = as.numeric(as.factor(BAICHR$siteTreat)),
   TL   = as.numeric(BAICHR$Length),
-  y    = as.numeric(preyMat[,2])
+  y    = as.numeric(preyMat[,2]),
+  meanTLs = meanTLs_BAICHR$meanTLs
 )
 
 BAICHR_isopod = list(
@@ -563,7 +615,8 @@ BAICHR_isopod = list(
   S    = length(unique(BAICHR$siteTreat)),
   site = as.numeric(as.factor(BAICHR$siteTreat)),
   TL   = as.numeric(BAICHR$Length),
-  y    = as.numeric(preyMat[,3])
+  y    = as.numeric(preyMat[,3]),
+  meanTLs = meanTLs_BAICHR$meanTLs
 )
 
 BAICHR_fish = list(
@@ -571,7 +624,8 @@ BAICHR_fish = list(
   S    = length(unique(BAICHR$siteTreat)),
   site = as.numeric(as.factor(BAICHR$siteTreat)),
   TL   = as.numeric(BAICHR$Length),
-  y    = as.numeric(preyMat[,4])
+  y    = as.numeric(preyMat[,4]),
+  meanTLs = meanTLs_BAICHR$meanTLs
 )
 
 BAICHR_polychaete = list(
@@ -579,7 +633,8 @@ BAICHR_polychaete = list(
   S    = length(unique(BAICHR$siteTreat)),
   site = as.numeric(as.factor(BAICHR$siteTreat)),
   TL   = as.numeric(BAICHR$Length),
-  y    = as.numeric(preyMat[,5])
+  y    = as.numeric(preyMat[,5]),
+  meanTLs = meanTLs_BAICHR$meanTLs
 )
 
 BAICHR_tanaid = list(
@@ -587,44 +642,45 @@ BAICHR_tanaid = list(
   S    = length(unique(BAICHR$siteTreat)),
   site = as.numeric(as.factor(BAICHR$siteTreat)),
   TL   = as.numeric(BAICHR$Length),
-  y    = as.numeric(preyMat[,6])
+  y    = as.numeric(preyMat[,6]),
+  meanTLs = meanTLs_BAICHR$meanTLs
 )
 
 #### RUNNING MODELS ##------------------------------------------------------------
 BAICHR_amphipod_res = rstan::stan(file   = "stan/logitReg.stan",
                                   data   = BAICHR_amphipod,
-                                  warmup = 1000,
-                                  iter   = 10000,
+                                  warmup = 500,
+                                  iter   = 3000,
                                   chains = 2)
 
 BAICHR_crustacean_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = BAICHR_crustacean,
-                                    warmup = 1000,
-                                    iter   = 5000,
+                                    warmup = 500,
+                                    iter   = 3000,
                                     chains = 2)
 
 BAICHR_polychaete_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = BAICHR_polychaete,
-                                    warmup = 1000,
-                                    iter   = 5000,
+                                    warmup = 500,
+                                    iter   = 3000,
                                     chains = 2)
 
 BAICHR_fish_res = rstan::stan(file   = "stan/logitReg.stan",
                               data   = BAICHR_fish,
-                              warmup = 1000,
-                              iter   = 5000,
+                              warmup = 500,
+                              iter   = 3000,
                               chains = 2)
 
 BAICHR_isopod_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = BAICHR_isopod,
-                                warmup = 1000,
-                                iter   = 5000,
+                                warmup = 500,
+                                iter   = 3000,
                                 chains = 2)
 
 BAICHR_tanaid_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = BAICHR_tanaid,
-                                warmup = 1000,
-                                iter   = 5000,
+                                warmup = 500,
+                                iter   = 3000,
                                 chains = 2)
 
 #### EXTRACTING PARAMETERS -----------------------------------------------------
@@ -724,13 +780,15 @@ BAICHR_PoE_PLOT = BAICHR_params %>%
 BAICHR_PoE_PLOT
 
 #### PLOTTING SIZE RELATIONSHIPS -----------------------------------------------
+baichrPrey    = list("Amphipods", "Fish", "Tanaids", "Other crustaceans")
+baichrOutputs = list(BAICHR_amphipod_res, BAICHR_fish_res,
+                     BAICHR_tanaid_res, BAICHR_crustacean_res) 
+
 ontoShift_BAICHR_PLOT = plotOntoShifts(
-  outputs = list(BAICHR_amphipod_res,
-                 BAICHR_fish_res,
-                 BAICHR_tanaid_res,
-                 BAICHR_crustacean_res),
-  prey = list("Amphipods", "Fish", "Tanaids", "Other crustaceans"),
-  minTL = min(BAICHR$Length), maxTL = max(BAICHR$Length),
+  outputs   = baichrOutputs,
+  prey      = baichrPrey,
+  minTL     = min(BAICHR$Length),
+  maxTL     = max(BAICHR$Length),
   plotNcols = 4
 )
 
@@ -743,7 +801,8 @@ ontoShift_merged = cowplot::plot_grid(
                                                  axis.title.y = element_blank()),
                    ontoShift_MICUND_PLOT + theme(axis.title.x = element_blank()),
                    ontoShift_BAICHR_PLOT + theme(axis.title.y = element_blank()),
-                   nrow = 3, align = "hv", labels = "auto")
+                   nrow = 3, align = "hv", labels = "auto",
+                   axis = "lr", label_size = 16)
 
 ggsave(plot = ontoShift_merged, filename = "ontoShift.pdf",
        width = 7.5, height = 6.5, path = "~/Documents/MS_USA/Chapter_2/Figures")
@@ -763,13 +822,13 @@ ggsave(plot = PoE_plot, filename = "PoE.pdf",
 LAGRHO_params = LAGRHO_params %>%
   filter(Parameter %in% c("p[1]", "p[3]", "p[6]",
                           "p[7]", "p[10]", "p[11]", "p[12]")) %>%
-  mutate(Site = case_when(Parameter == "p[1]" ~ "AM-C",
-                          Parameter == "p[3]" ~ "DR-C", 
-                          Parameter =="p[6]" ~ "LB-C",
-                          Parameter =="p[7]" ~ "PaP-C", 
-                          Parameter =="p[10]" ~ "HWP-R",
-                          Parameter =="p[11]" ~ "PaP-R",
-                          Parameter =="p[12]" ~ "SA-R")) %>%
+  mutate(Site = case_when(Parameter == "p[1]"  ~ "AM-C",
+                          Parameter == "p[3]"  ~ "DR-C", 
+                          Parameter == "p[6]"  ~ "LB-C",
+                          Parameter == "p[7]"  ~ "PaP-C", 
+                          Parameter == "p[10]" ~ "HWP-R",
+                          Parameter == "p[11]" ~ "PaP-R",
+                          Parameter == "p[12]" ~ "SA-R")) %>%
   mutate(Species = "Pinfish")
 
 # To extract: p[1], p[4], p[7], p[8]
@@ -946,16 +1005,14 @@ PPCHECK_DF = data.frame(estimated_merged$site, observed_merged$site, estimated_m
 names(PPCHECK_DF) = c("site", "site2", "prey", "species", "estimated", "observed", "sd")
 PPCHECK_DF$diff = abs(PPCHECK_DF$estimated - PPCHECK_DF$observed)
 
-# ploy with prey coding to highlight deviances are due to ontogenetic shifts
+# plot with prey coding to highlight deviances are due to ontogenetic shifts
 
 PPCHECK_DF %>%
   ggplot() +
   geom_point(aes(x = observed,
                  y = estimated,
                  color = prey,
-                 size = diff,
-                 alpha = 0.7)) +
-  scale_size(range = c(1,7)) +
+                 alpha = 0.7), size = 3) +
   facet_wrap(~species) +
   geom_abline(slope=1, linetype = "dashed", color="Red") +
   xlim(0,1) + ylim(0,1) + theme_custom() +
@@ -969,3 +1026,133 @@ PPCHECK_DF %>%
 
 
 ggsave("ppcheck.pdf", width = 9, height = 5, path = "~/Documents/MS_USA/Chapter_2/Figures")
+
+# 6. FO % TABLES ---------------------------------------------------------------
+
+# create base dataframes
+LAGRHO_FO_df = PPCHECK_DF %>% 
+  group_by(prey, site, species) %>%
+  filter(species == "Pinfish") %>%
+  tidyr::pivot_wider(id_cols = !c(site2, estimated, diff, sd),
+                     names_from = 'prey',
+                     values_from = 'observed')
+
+LAGRHO_meanTLs = LAGRHO %>%
+  group_by(siteTreat) %>%
+  filter(siteTreat %in% c("AM-CT", "DR-CT", "HWP-LS", "LB-CT",
+                          "NEPaP-CT", "NEPaP-LS", "SA-LS")) %>%
+  mutate(siteTreat = factor(siteTreat,
+                            levels = c("AM-CT", "DR-CT", "HWP-LS", "LB-CT",
+                                       "NEPaP-CT", "NEPaP-LS", "SA-LS"))) %>%
+  summarise(mean   = round(mean(Length, na.rm = T),1),
+            range  = paste0(min(Length, na.rm = T), "-",
+                            max(Length, na.rm = T)),
+            N      = n())
+
+LAGRHO_FO_df2 = data.frame(
+  LAGRHO_FO_df$site,
+  LAGRHO_meanTLs$mean,
+  LAGRHO_meanTLs$range,
+  LAGRHO_meanTLs$N,
+  round(LAGRHO_FO_df$Amphipod,2),
+  round(LAGRHO_FO_df$Crustacean,2),
+  round(LAGRHO_FO_df$Fish,2),
+  round(LAGRHO_FO_df$Isopod,2),
+  round(LAGRHO_FO_df$Polychaete,2),
+  round(LAGRHO_FO_df$SAV,2),
+  round(LAGRHO_FO_df$Tanaidacea,2)
+)
+
+names(LAGRHO_FO_df2) = c("Site", "Mean_TL", "TL_range", "N", 
+                        colnames(LAGRHO_FO_df[,3:ncol(LAGRHO_FO_df)]))
+
+print(LAGRHO_FO_df2)
+
+
+MICUND_FO_df = PPCHECK_DF %>% 
+  group_by(prey, site, species) %>%
+  filter(species == "Croaker") %>%
+  tidyr::pivot_wider(id_cols = !c(site2, estimated, diff, sd),
+                     names_from = 'prey',
+                     values_from = 'observed')
+
+MICUND_meanTLs = MICUND %>%
+  group_by(siteTreat) %>%
+  filter(siteTreat %in% c("CI-CT", "NEPaP-CT", "NEPaP-LS", "SA-LS")) %>%
+  mutate(siteTreat = factor(siteTreat,
+                            levels = c("CI-CT", "NEPaP-CT", "NEPaP-LS", "SA-LS"))) %>%
+  summarise(mean   = round(mean(Length, na.rm = T),1),
+            range  = paste0(min(Length, na.rm = T), "-",
+                            max(Length, na.rm = T)),
+            N      = n())
+
+MICUND_FO_df2 = data.frame(
+  MICUND_FO_df$site,
+  MICUND_meanTLs$mean,
+  MICUND_meanTLs$range,
+  MICUND_meanTLs$N,
+  round(MICUND_FO_df$Amphipod,2),
+  round(MICUND_FO_df$Crustacean,2),
+  round(MICUND_FO_df$Fish,2),
+  round(MICUND_FO_df$Isopod,2),
+  round(MICUND_FO_df$Polychaete,2),
+  round(MICUND_FO_df$Tanaidacea,2)
+)
+
+names(MICUND_FO_df2) = c("Site", "Mean_TL", "TL_range", "N",
+                         colnames(MICUND_FO_df[,3:ncol(MICUND_FO_df)]))
+
+print(MICUND_FO_df2)
+
+BAICHR_FO_df = PPCHECK_DF %>% 
+  group_by(prey, site, species) %>%
+  filter(species == "Silver perch") %>%
+  tidyr::pivot_wider(id_cols = !c(site2, estimated, diff, sd),
+                     names_from = 'prey',
+                     values_from = 'observed')
+
+BAICHR_meanTLs = BAICHR %>%
+  group_by(siteTreat) %>%
+  filter(siteTreat %in% c("CI-CT", "NEPaP-CT", "NEPaP-LS", "SA-LS")) %>%
+  mutate(siteTreat = factor(siteTreat,
+                            levels = c("CI-CT", "NEPaP-CT", "NEPaP-LS", "SA-LS"))) %>%
+  summarise(mean   = round(mean(Length, na.rm = T),1),
+            range  = paste0(min(Length, na.rm = T), "-",
+                            max(Length, na.rm = T)),
+            N      = n())
+
+BAICHR_FO_df2 = data.frame(
+  BAICHR_FO_df$site,
+  BAICHR_meanTLs$mean,
+  BAICHR_meanTLs$range,
+  BAICHR_meanTLs$N,
+  round(BAICHR_FO_df$Amphipod,2),
+  round(BAICHR_FO_df$Crustacean,2),
+  round(BAICHR_FO_df$Fish,2),
+  round(BAICHR_FO_df$Isopod,2),
+  round(BAICHR_FO_df$Polychaete,2),
+  round(BAICHR_FO_df$Tanaidacea,2)
+)
+
+names(BAICHR_FO_df2) = c("Site", "Mean TL", "TL range", "N",
+                         colnames(BAICHR_FO_df[,3:ncol(BAICHR_FO_df)]))
+
+# create tables
+LAGRHO_FO_table = flextable(
+  data     = LAGRHO_FO_df2,
+  col_keys = c("Site", "Mean", "range", "N",
+               'Amphipod', 'Crustacean', 'Fish', 'Isopod',
+               'Polychaete', 'SAV', 'Tanaidacea')) %>%
+  bold(part = "header", bold = TRUE) %>%
+  align(align = "center", part = "all")
+
+
+LAGRHO_FO_table
+
+
+save_as_docx(LAGRHO_FO_table, path = "~/Documents/MS_USA/Chapter_2/Tables/LAGRHO_FO_table.docx")
+save_as_docx(BAICHR_FO_df2, path = "~/Documents/MS_USA/Chapter_2/Tables/BAICHR_FO_table.docx")
+save_as_docx(BAICHR_FOtable, path = "~/Documents/MS_USA/Chapter_2/Tables/BAICHR_FO_table.docx")
+
+
+

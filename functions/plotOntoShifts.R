@@ -1,13 +1,20 @@
 inverse_logit = function(TL, muAlpha, muBeta, sigmaAlpha, sigmaBeta) {
+  
+  # performs inverse-logit transformation using parameter values
+  # from logistic model
+  
+  # parameter values -----------------------------------------------------------
   lowerAlpha = muAlpha - sigmaAlpha
   upperAlpha = muAlpha + sigmaAlpha
   lowerBeta  = muBeta - sigmaBeta
   upperBeta  = muBeta + sigmaBeta
   
+  # inverse-logit transform ----------------------------------------------------
   mean  = 1/(1 + exp(-(muAlpha + muBeta*TL)))
   upper = 1/(1 + exp(-(upperAlpha + upperBeta*TL)))
   lower = 1/(1 + exp(-(lowerAlpha + lowerBeta*TL)))
   
+  # create output
   output = data.frame(TL, mean, upper, lower)
   
   return(output)
@@ -16,7 +23,7 @@ inverse_logit = function(TL, muAlpha, muBeta, sigmaAlpha, sigmaBeta) {
 
 plotOntoShifts = function(outputs, prey, minTL, maxTL, plotNcols) {
   
-  # Plots relationships between total lenght (tl) and the probabilities 
+  # Plots relationships between total lenght (TL) and the probabilities 
   # of observing certain prey types
   
   # load required packages, install if not detected ----------------------------

@@ -464,7 +464,7 @@ deflection_plot_BAICHR <- ggs_caterpillar(MCMC_betas_BAICHR,
         strip.text.x = element_blank()) +
   xlab("Parameter value") + ylab("") +
   facet_grid(~mask, scales = "free")+
-  facetted_pos_scales(mask == 'N' ~ scale_x_continuous(breaks = c(-0.07,0,0.07)))
+  facetted_pos_scales(mask == 'N' ~ scale_x_continuous(breaks = c(-0.07, 0)))
 
 
 
@@ -549,7 +549,7 @@ perch_plots <- ggarrange(AOV_main_plot_BAICHR,
 arrangedPlots = ggarrange(pinfish_plots, croaker_plots,perch_plots, nrow = 3)
 
 ggsave(plot = arrangedPlots, filename = "gutFullness.pdf",
-       width = 8, height = 7, path = "~/Documents/MS_USA/Chapter_2/Figures")
+       width = 9, height = 7, path = "~/Documents/MS_USA/Chapter_2/Figures")
 
 
 # ARRANGE PAIRWISE PLOTS FOR SUPPLEMENTAL FIGURE
@@ -563,6 +563,5 @@ pairwise_plots <- grid.arrange(LAGRHO_pairwise, pairwise_sub,
              bottom = "           Posterior difference",
              left = "", nrow = 2)
 
-?grid.arrange
 
 stanc("betareg.stan")
