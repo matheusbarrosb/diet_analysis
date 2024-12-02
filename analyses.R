@@ -1146,13 +1146,113 @@ LAGRHO_FO_table = flextable(
   bold(part = "header", bold = TRUE) %>%
   align(align = "center", part = "all")
 
+MICUND_FO_table = flextable(
+  data     = MICUND_FO_df2,
+  col_keys = c("Site", "Mean", "range", "N",
+               'Amphipod', 'Crustacean', 'Fish', 'Isopod',
+               'Polychaete', 'Tanaidacea')) %>%
+  bold(part = "header", bold = TRUE) %>%
+  align(align = "center", part = "all")
 
-LAGRHO_FO_table
+BAICHR_FO_table = flextable(
+  data     = BAICHR_FO_df2,
+  col_keys = c("Site", "Mean", "range", "N",
+               'Amphipod', 'Crustacean', 'Fish', 'Isopod',
+               'Polychaete', 'Tanaidacea')) %>%
+  bold(part = "header", bold = TRUE) %>%
+  align(align = "center", part = "all")
 
 
 save_as_docx(LAGRHO_FO_table, path = "~/Documents/MS_USA/Chapter_2/Tables/LAGRHO_FO_table.docx")
-save_as_docx(BAICHR_FO_df2, path = "~/Documents/MS_USA/Chapter_2/Tables/BAICHR_FO_table.docx")
-save_as_docx(BAICHR_FOtable, path = "~/Documents/MS_USA/Chapter_2/Tables/BAICHR_FO_table.docx")
+save_as_docx(MICUND_FO_table, path = "~/Documents/MS_USA/Chapter_2/Tables/MICUND_FO_table.docx")
+save_as_docx(BAICHR_FO_table, path = "~/Documents/MS_USA/Chapter_2/Tables/BAICHR_FO_table.docx")
 
+# 7. STACKED AREA CHART TO SHOW ONTOGENETIC SHIFTS -----------------------------
 
+# PINFISH ##
+LAGRHO_HIST = hist(LAGRHO$Length, breaks = 15)
 
+LAGRHO_AREA = LAGRHO %>%
+  pivot_longer(cols = 6:12, names_to = "Prey", values_to = "Ocurrence") %>%
+  mutate(Ints = cut(as.numeric(Length), breaks = c(30,40,50,60,70,80,90,170,180), right = TRUE)) %>%
+  group_by(Prey, Ints) %>%
+  summarise(TotalOcc = sum(Ocurrence, na.rm = TRUE),
+            n = n())
+
+LAGRHO_AREA$Midpoints = rep(c(35,45,55,65,75,85,130,175,200), length(unique(LAGRHO_AREA$Prey)))
+
+LAGRHO_areaPlot = LAGRHO_AREA %>%
+  group_by(as.factor(Midpoints)) %>%
+  mutate(PercOcc = TotalOcc/n) %>%
+  
+  ggplot(aes(x = Midpoints, y = PercOcc, fill = Prey)) +
+  geom_area(alpha = 0.7) + 
+  theme_custom() + 
+  scale_fill_brewer(palette = "Set1") +
+  xlab("Total length (mm)") +
+  ylab("FO %") + xlim(35,130) +
+  ggtitle("Pinfish")
+
+# CROAKER ##
+MICUND_AREA = MICUND %>%
+  pivot_longer(cols = 6:11, names_to = "Prey", values_to = "Ocurrence") %>%
+  mutate(Ints = cut(as.numeric(Length), breaks = c(25, 50, 75, 100, 125, 150, 200), right = TRUE)) %>%
+  group_by(Prey, Ints) %>%
+  summarise(TotalOcc = sum(Ocurrence, na.rm = TRUE),
+            n = n())
+
+MICUND_AREA$Midpoints = rep(c(37, 62, 87, 112, 175, 200),length(unique(MICUND_AREA$Prey)))
+
+MICUND_areaPlot = MICUND_AREA %>%
+  group_by(as.factor(Midpoints)) %>%
+  mutate(PercOcc = TotalOcc/n) %>%
+  
+  ggplot(aes(x = Midpoints, y = PercOcc, fill = Prey)) +
+  geom_area(alpha = 0.7) + 
+  theme_custom() + 
+  scale_fill_brewer(palette = "Set1") +
+  xlab("Total length (mm)") +
+  ylab("FO %") + ggtitle("Croaker")
+
+# SILVER PERCH ##
+
+BAICHR_AREA = BAICHR %>%
+  pivot_longer(cols = 6:11, names_to = "Prey", values_to = "Ocurrence") %>%
+  mutate(Ints = cut(as.numeric(Length), breaks = c(20, 40, 60, 80, 100, 120, 130), right = TRUE)) %>%
+  group_by(Prey, Ints) %>%
+  summarise(TotalOcc = sum(Ocurrence, na.rm = TRUE),
+            n = n())
+
+BAICHR_AREA$Midpoints = rep(c(30, 50, 70, 90, 120),length(unique(BAICHR_AREA$Prey)))
+
+BAICHR_areaPlot = BAICHR_AREA %>%
+  group_by(as.factor(Midpoints)) %>%
+  mutate(PercOcc = TotalOcc/n) %>%
+  
+  ggplot(aes(x = Midpoints, y = PercOcc, fill = Prey)) +
+  geom_area(alpha = 0.7) + 
+  theme_custom() + 
+  scale_fill_brewer(palette = "Set1") +
+  xlab("Total length (mm)") +
+  ylab("FO %") + ggtitle("Silver perch")
+
+###### MERGING
+
+ggarrange(LAGRHO_areaPlot, MICUND_areaPlot, BAICHR_areaPlot, ncol = 1)
+
+area_merged = cowplot::plot_grid(
+  LAGRHO_areaPlot + theme(axis.title.x = element_blank(),
+                          axis.title.y = element_blank(),
+                          legend.position = "top",
+                          legend.title = element_blank(),
+                          legend.text = element_text(size = 8),
+                          legend.key.size = unit(0.4, 'cm')),
+  MICUND_areaPlot + theme(axis.title.x = element_blank(),
+                          legend.position = "none"),
+  BAICHR_areaPlot + theme(axis.title.y = element_blank(),
+                          legend.position = "none"),
+  nrow = 3, align = "v", axis = "lr",
+  rel_heights = c(0.38,0.31,0.31))
+
+ggsave(plot = area_merged, filename = "rawOntoShift.pdf",
+       width = 5.5, height = 7.58, path = "~/Documents/MS_USA/Chapter_2/Figures")
