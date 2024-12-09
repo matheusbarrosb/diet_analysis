@@ -48,11 +48,11 @@ model {
 
 // PRIOR COMPONENT -------------------------------------------------------------
   
-  phi ~ cauchy(0, 1);           // OTHER OPTION IS A BROAD INV_GAMMA
-  alpha ~ normal(0, 10);               
-  beta ~ normal(0, sigma_beta);
+  phi        ~ cauchy(0,10);           // OTHER OPTION IS A BROAD INV_GAMMA
+  alpha      ~ normal(0,2);               
+  beta       ~ normal(0,sigma_beta);
   sigma_beta ~ cauchy(0,1);
-  betaTL ~ normal(0, 10);
+  betaTL     ~ normal(0,2);
   
 }
 
@@ -61,8 +61,7 @@ generated quantities {
   vector[S] y_hat;              // SITE MEANS
   vector[S] dflc;               // SCALED DEFLECTION PARAMETERS
   vector[S] cnt[(S-1)];         // CONTRASTS FOR PAIRWISE COMPARISONS
-  real mu_GF;
-  real y_hat_all;
+  real      mu_GF;
 
   for (i in 1:N) {
     for (s in 1:S) {
@@ -71,9 +70,9 @@ generated quantities {
       real A_hat[S];
       real B_hat[S];
       mu_hat[s] = inv_logit(alpha + beta[s]);
-      A_hat[s] = mu_hat[s] * phi;
-      B_hat[s] = (1.0 - mu_hat[s]) * phi;
-      y_hat[s] = beta_rng(A_hat[s] , B_hat[s]); // POSTERIOR PREDICTIVE SITE MEANS
+      A_hat[s]  = mu_hat[s] * phi;
+      B_hat[s]  = (1.0 - mu_hat[s]) * phi;
+      y_hat[s]  = beta_rng(A_hat[s], B_hat[s]); // POSTERIOR PREDICTIVE SITE MEANS
       
     }
   }
@@ -93,4 +92,10 @@ generated quantities {
       // NUMBER OF COMPARISONS = K*(K-1), WHERE K =. No OF GROUPS
     }
   }
+  
+  // // PRIOR PREDICTIVE CHECK
+  real alpha_hat      = normal_rng(0,2);
+  real beta_TL_hat    = normal_rng(0,2);
+  real phi_hat        = cauchy_rng(0,10);
+  
 }

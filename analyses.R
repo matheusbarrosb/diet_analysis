@@ -1255,4 +1255,4 @@ area_merged = cowplot::plot_grid(
   rel_heights = c(0.38,0.31,0.31))
 
 ggsave(plot = area_merged, filename = "rawOntoShift.pdf",
-       width = 5.5, height = 7.58, path = "~/Documents/MS_USA/Chapter_2/Figures")
+       width = 5.5, height = 7.58, path = "~/Documents/MS_USA/Chapter_2/Figures/Supplemental")

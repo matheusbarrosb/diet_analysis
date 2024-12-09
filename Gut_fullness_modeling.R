@@ -2,10 +2,14 @@ require(ggmcmc)
 require(dplyr)
 require(tidybayes)
 require(tidyverse)
-library(ggbreak) 
-library(patchwork)
+require(ggbreak) 
+require(patchwork)
 require(see)
-library(ggh4x)
+require(ggh4x)
+require(rstan)
+require(ggpubr)
+
+source("functions/plotPostPrior.R")
 
 ### PINFISH #####
 diet.raw <- read_csv("~/Documents/MS_USA/Chapter_2/Data/rawData.csv", skip = 1)
@@ -41,10 +45,9 @@ stan_data_LAGRHO <- list(GF    = data.df.LAGRHO$GF, # gut fullness, response
 
 #### RUN MODEL ####
 ancova_fit_LAGRHO <- rstan::stan(file = "stan/betareg.stan", data = stan_data_LAGRHO,
-                                 warmup = 500,iter = 2000, chains = 2,
+                                 warmup = 1000,iter = 15000, chains = 3,
                                  control = list(max_treedepth = 15))
 
-stan_dens(ancova_fit_LAGRHO, pars = "y_hat") # plot predicted fullness
 # PRINT SOME RESULTS, CHECK CONVERGENCE
 print(ancova_fit_LAGRHO, pars = "dflc")
 print(ancova_fit_LAGRHO, pars = "y_hat")
@@ -213,6 +216,23 @@ total <- rep(3000, length(MCMC_ROPE_LAGRHO$Contrast))
 MCMC_ROPE_LAGRHO$total <- total 
 MCMC_ROPE_LAGRHO$perc <- round(MCMC_ROPE_LAGRHO$n/MCMC_ROPE_LAGRHO$total,2)
 
+#### PLOT PRIOR x POSTERIOR ####
+
+postList  = c("alpha", "betaTL", "phi")
+priorList = c("alpha_hat", "beta_TL_hat", "phi_hat")
+parNames  = c("alpha", "beta_TL", "phi")
+
+postPriorPlot_LAGRHO = plotPostPrior(res       = ancova_fit_LAGRHO,
+                                     postList  = postList,
+                                     priorList = priorList,
+                                     parNames  = parNames,
+                                     plotTitle = "Pinfish",
+                                     phiLimit  = 80)
+
+ggsave(plot = postPriorPlot_LAGRHO, filename = "postPriorPlot_LAGRHO.pdf",
+       width = 6.2, height = 2.8,
+       path = "~/Documents/MS_USA/Chapter_2/Figures/Supplemental")
+
 ### CROAKER ####----------------------------------------------------------------
 
 #### DATA WRANGLING ####
@@ -242,11 +262,10 @@ stan_data_MICUND <- list(GF    = data.df$GF,
 
 #### RUN MODEL ####
 ancova_fit_MICUND <- rstan::stan(file = "stan/betareg.stan", data = stan_data_MICUND,
-                                 warmup = 1000,iter = 3000, chains = 3,
+                                 warmup = 1000,iter = 15000, chains = 3,
                                  control = list(max_treedepth = 20))
 
 print(ancova_fit_MICUND, par = "dflc")
-stan_dens(ancova_fit_MICUND, pars = "y_hat")
 
 #### PLOTTING MAIN EFFECTS ####
 mcmc_MICUND <- ggs(ancova_fit_MICUND)
@@ -273,7 +292,7 @@ AOV_main_plot_MICUND <- ggplot(MCMC_group_means_MICUND) +
   ggtitle("Croaker")+
   theme(plot.title = element_text(size = 15))
 
-#### PLOTTING DELFECTIONS #####
+#### PLOTTING DEFLECTIONS #####
 
 MCMC_betas_MICUND <- filter(mcmc_MICUND,
                             Parameter %in% c("dflc[1]", "dflc[2]",
@@ -361,6 +380,19 @@ MICUND_pairwise <- MCMC_diff_MICUND %>%
   scale_fill_manual(values = c("gray80", "lightgreen"), name = "ROPE") +
   ylab("") + xlab("") + ggtitle("Croaker")
 
+#### PLOT PRIOR x POSTERIOR ####
+
+postPriorPlot_MICUND = plotPostPrior(res       = ancova_fit_MICUND,
+                                     postList  = postList,
+                                     priorList = priorList,
+                                     parNames  = parNames,
+                                     plotTitle = "Croaker",
+                                     phiLimit  = 475)
+
+ggsave(plot = postPriorPlot_MICUND, filename = "postPriorPlot_MICUND.pdf",
+       width = 6.2, height = 2.8,
+       path = "~/Documents/MS_USA/Chapter_2/Figures/Supplemental")
+
 
 ### SILVER PERCH ###---------------------------------------------------------
 
@@ -396,10 +428,9 @@ stan_data_BAICHR <- list(GF = data.df$GF,
                          mu_GF = mean(data.df$GF))
 #### RUN MODEL ####
 ancova_fit_BAICHR <- rstan::stan(file = "stan/betareg.stan", data = stan_data_BAICHR,
-                                 warmup = 1000,iter = 3000, chains = 3,
+                                 warmup = 1000,iter = 15000, chains = 3,
                                  control = list(max_treedepth = 15))
 
-stan_dens(ancova_fit_BAICHR, pars = "y_hat")
 print(ancova_fit_BAICHR, pars = "y_hat")
 print(ancova_fit_BAICHR, pars = "dflc")
 
@@ -526,7 +557,20 @@ BAICHR_pairwise <- MCMC_diff_BAICHR %>%
   scale_fill_manual(values = c("gray80", "lightgreen"), name = "ROPE") +
   ylab("") + ggtitle("Silver perch") + remove_y
 
+#### PLOT PRIOR x POSTERIOR ####
 
+postPriorPlot_BAICHR = plotPostPrior(res       = ancova_fit_BAICHR,
+                                     postList  = postList,
+                                     priorList = priorList,
+                                     parNames  = parNames,
+                                     plotTitle = "Silver perch",
+                                     phiLimit  = 200)
+
+ggsave(plot = postPriorPlot_BAICHR, filename = "postPriorPlot_BAICHR.pdf",
+       width = 6.2, height = 2.8,
+       path = "~/Documents/MS_USA/Chapter_2/Figures/Supplemental")
+
+#------------------------------------------------------------------------------#
 ### ARRANGE ALL PLOTS ####
 
 # ARRANGE PLOTS FOR MAIN FIGURE #
@@ -560,8 +604,10 @@ pairwise_sub <- ggarrange(MICUND_pairwise, BAICHR_pairwise,
 
 require(gridExtra)
 pairwise_plots <- grid.arrange(LAGRHO_pairwise, pairwise_sub,
-             bottom = "           Posterior difference",
+             bottom = "           Posterior difference", # do not modify
              left = "", nrow = 2)
 
+ggsave(plot = pairwise_plots, filename = "pairwise_gutFullness.pdf",
+       width = 9, height = 7, path = "~/Documents/MS_USA/Chapter_2/Figures/Supplemental")
 
-stanc("betareg.stan")
+
