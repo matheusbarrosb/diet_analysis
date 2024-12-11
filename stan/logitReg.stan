@@ -28,5 +28,8 @@ generated quantities {
   for (k in 1:S) {
     p[k] = inv_logit(alpha + beta_site[k] + beta*meanTLs[k]); 
   }
+  // FOR PRIOR PREDICTIVE CHECK
+  real alpha_hat = normal_rng(0,1);
+  real beta_hat  = normal_rng(0,1);
 }
 

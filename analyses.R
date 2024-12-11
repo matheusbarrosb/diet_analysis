@@ -119,45 +119,45 @@ LAGRHO_isopod = list(
 #### RUNNING MODELS ##------------------------------------------------------------
 LAGRHO_amphipod_res = rstan::stan(file   = "stan/logitReg.stan",
                                   data   = LAGRHO_amphipod,
-                                  warmup = 500,
-                                  iter   = 3000,
-                                  chains = 2)
+                                  warmup = 1000,
+                                  iter   = 10000,
+                                  chains = 3)
 
 LAGRHO_polychaete_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = LAGRHO_polychaete,
-                                    warmup = 500,
-                                    iter   = 3000,
-                                    chains = 2)
+                                    warmup = 1000,
+                                    iter   = 10000,
+                                    chains = 3)
 
 LAGRHO_crustacean_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = LAGRHO_crustacean,
-                                    warmup = 500,
-                                    iter   = 3000,
-                                    chains = 2)
+                                    warmup = 1000,
+                                    iter   = 10000,
+                                    chains = 3)
 
 LAGRHO_fish_res = rstan::stan(file   = "stan/logitReg.stan",
                               data   = LAGRHO_fish,
-                              warmup = 500,
-                              iter   = 3000,
-                              chains = 2)
+                              warmup = 1000,
+                              iter   = 10000,
+                              chains = 3)
 
 LAGRHO_tanaid_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = LAGRHO_tanaid,
-                                warmup = 500,
-                                iter   = 5000,
-                                chains = 2)
+                                warmup = 1000,
+                                iter   = 10000,
+                                chains = 3)
 
 LAGRHO_SAV_res = rstan::stan(file   = "stan/logitReg.stan",
                              data   = LAGRHO_SAV,
-                             warmup = 500,
-                             iter   = 3000,
-                             chains = 2)
+                             warmup = 1000,
+                             iter   = 10000,
+                             chains = 3)
 
 LAGRHO_isopod_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = LAGRHO_isopod,
-                                warmup = 500,
-                                iter   = 3000,
-                                chains = 2)
+                                warmup = 1000,
+                                iter   = 10000,
+                                chains = 3)
 
 #### EXTRACTING PARAMETERS -----------------------------------------------------
 
@@ -295,6 +295,25 @@ ontoShift_LAGRHO_PLOT = plotOntoShifts(
 
 ontoShift_LAGRHO_PLOT
 
+#### PLOTTING PRIORS VS POSTERIORS ----------------------------------------------
+resList   = list(LAGRHO_amphipod_res, LAGRHO_polychaete_res, LAGRHO_crustacean_res,
+                 LAGRHO_fish_res, LAGRHO_tanaid_res, LAGRHO_SAV_res, LAGRHO_isopod_res)
+priorList = c("alpha_hat", "beta_hat")
+postList  = c("alpha", "beta")
+parNames  = postList
+preyNames = c("Amphipod", "Polychaete", "Crustacean", "Fish", "Tanaids", "SAV", "Isopod")
+
+LAGRHO_postPrior_plot = plotPostPrior_logit(resList    = resList,
+                                             priorList = priorList,
+                                             postList  = postList,
+                                             parNames  = parNames,
+                                             preyNames = preyNames,
+                                             plotTitle = "Pinfish")
+
+ggsave(plot = LAGRHO_postPrior_plot, filename = "postPriorPlot_logit_LAGRHO.pdf",
+       width = 4.1, height = 7.6,
+       path = "~/Documents/MS_USA/Chapter_2/Figures/Supplemental")
+
 ### 2. CROAKER -----------------------------------------------------------------
 #### DATA WRANGLING --------------------------------------------------------------
 MICUND = rawData %>%
@@ -389,38 +408,38 @@ MICUND_tanaid = list(
 #### RUNNING MODELS ##------------------------------------------------------------
 MICUND_amphipod_res = rstan::stan(file   = "stan/logitReg.stan",
                                   data   = MICUND_amphipod,
-                                  warmup = 500,
-                                  iter   = 3000,
+                                  warmup = 1000,
+                                  iter   = 10000,
                                   chains = 2)
 
 MICUND_crustacean_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = MICUND_crustacean,
-                                    warmup = 500,
-                                    iter   = 3000,
+                                    warmup = 1000,
+                                    iter   = 10000,
                                     chains = 2)
 
 MICUND_polychaete_res = rstan::stan(file   = "stan/logitReg.stan",
                                     data   = MICUND_polychaete,
-                                    warmup = 500,
-                                    iter   = 3000,
+                                    warmup = 1000,
+                                    iter   = 10000,
                                     chains = 2)
 
 MICUND_fish_res = rstan::stan(file   = "stan/logitReg.stan",
                               data   = MICUND_fish,
-                              warmup = 500,
-                              iter   = 3000,
+                              warmup = 1000,
+                              iter   = 10000,
                               chains = 2)
 
 MICUND_isopod_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = MICUND_isopod,
-                                warmup = 500,
-                                iter   = 3000,
+                                warmup = 1000,
+                                iter   = 10000,
                                 chains = 2)
 
 MICUND_tanaid_res = rstan::stan(file   = "stan/logitReg.stan",
                                 data   = MICUND_tanaid,
-                                warmup = 500,
-                                iter   = 3000,
+                                warmup = 1000,
+                                iter   = 10000,
                                 chains = 2)
 
 #### EXTRACTING PARAMETERS -----------------------------------------------------
@@ -521,14 +540,6 @@ MICUND_PoE_PLOT = MICUND_params %>%
 MICUND_PoE_PLOT
 
 #### PLOTTING SIZE RELATIONSHIPS -----------------------------------------------
-
-# significant slopes:
-# amphipods
-# polychaetes
-# fish
-# tanaids
-# other crustaceans
-
 micundPrey = list(
   "Amphipods", "Polychaetes",
   "Tanaids", "Other crustaceans"
@@ -548,6 +559,25 @@ ontoShift_MICUND_PLOT = plotOntoShifts(
 )
 
 ontoShift_MICUND_PLOT
+
+#### PLOTTING PRIORS VS POSTERIORS ----------------------------------------------
+resList   = list(MICUND_amphipod_res, MICUND_polychaete_res, MICUND_crustacean_res,
+                 MICUND_fish_res, MICUND_tanaid_res, MICUND_isopod_res)
+priorList = c("alpha_hat", "beta_hat")
+postList  = c("alpha", "beta")
+parNames  = postList
+preyNames = c("Amphipod", "Polychaete", "Crustacean", "Fish", "Tanaids", "Isopod")
+
+MICUND_postPrior_plot = plotPostPrior_logit(resList   = resList,
+                                            priorList = priorList,
+                                            postList  = postList,
+                                            parNames  = parNames,
+                                            preyNames = preyNames,
+                                            plotTitle = "Croaker")
+
+ggsave(plot = MICUND_postPrior_plot, filename = "postPriorPlot_logit_MICUND.pdf",
+       width = 4.1, height = 7.6,
+       path = "~/Documents/MS_USA/Chapter_2/Figures/Supplemental")
 
 ### 3. SILVER PERCH ------------------------------------------------------------
 #### DATA WRANGLING ------------------------------------------------------------
@@ -793,6 +823,25 @@ ontoShift_BAICHR_PLOT = plotOntoShifts(
 )
 
 ontoShift_BAICHR_PLOT
+
+#### PLOTTING PRIORS VS POSTERIORS ----------------------------------------------
+resList   = list(BAICHR_amphipod_res, BAICHR_polychaete_res, BAICHR_crustacean_res,
+                 BAICHR_fish_res, BAICHR_tanaid_res, BAICHR_isopod_res)
+priorList = c("alpha_hat", "beta_hat")
+postList  = c("alpha", "beta")
+parNames  = postList
+preyNames = c("Amphipod", "Polychaete", "Crustacean", "Fish", "Tanaids", "Isopod")
+
+BAICHR_postPrior_plot = plotPostPrior_logit(resList   = resList,
+                                            priorList = priorList,
+                                            postList  = postList,
+                                            parNames  = parNames,
+                                            preyNames = preyNames,
+                                            plotTitle = "Silver perch")
+
+ggsave(plot = BAICHR_postPrior_plot, filename = "postPriorPlot_logit_BAICHR.pdf",
+       width = 4.1, height = 7.6,
+       path = "~/Documents/MS_USA/Chapter_2/Figures/Supplemental")
 
 # 4. MERGING PLOTS -------------------------------------------------------------
 # ontogenetic shift plots
@@ -1170,8 +1219,6 @@ save_as_docx(BAICHR_FO_table, path = "~/Documents/MS_USA/Chapter_2/Tables/BAICHR
 # 7. STACKED AREA CHART TO SHOW ONTOGENETIC SHIFTS -----------------------------
 
 # PINFISH ##
-LAGRHO_HIST = hist(LAGRHO$Length, breaks = 15)
-
 LAGRHO_AREA = LAGRHO %>%
   pivot_longer(cols = 6:12, names_to = "Prey", values_to = "Ocurrence") %>%
   mutate(Ints = cut(as.numeric(Length), breaks = c(30,40,50,60,70,80,90,170,180), right = TRUE)) %>%
@@ -1237,8 +1284,6 @@ BAICHR_areaPlot = BAICHR_AREA %>%
   ylab("FO %") + ggtitle("Silver perch")
 
 ###### MERGING
-
-ggarrange(LAGRHO_areaPlot, MICUND_areaPlot, BAICHR_areaPlot, ncol = 1)
 
 area_merged = cowplot::plot_grid(
   LAGRHO_areaPlot + theme(axis.title.x = element_blank(),
