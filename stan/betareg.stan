@@ -4,16 +4,24 @@ data {
   int S;                                // NUMBER OF SITES
   int site[N];                          // CATEGORICAL PREDICTOR
   vector<lower=0,upper=1>[N] GF;        // RESPONSE, GUT FULNESS (%)
+  int<lower=0,upper=1> Z[N];            // BINARY RESPONSE, INDICATOR FOR EMPTY GUTS    
   real TL[N];                           // CONTINUOUS PREDICTOR
   
 }
 parameters {
   
-  real alpha;                           // OVERALL GF MEAN, UNTRANSFORMED
-  vector[S] beta;                       // DEFLECTIONS, UNTRANSFORMED
+  // BETA MODEL //
+  
+  real               alpha;             // OVERALL GF MEAN, UNTRANSFORMED
+  vector[S]          beta;              // DEFLECTIONS, UNTRANSFORMED
   vector<lower=0>[S] sigma_beta;        // DEFLECTION STANDARD DEVIATIONS
-  real betaTL;                          // EFFECT OF CONTINUOS COVARIATE
-  real<lower=0>phi;                     // DISPERSION PARAMETER
+  real               betaTL;            // EFFECT OF CONTINUOS COVARIATE
+  real<lower=0>      phi;               // DISPERSION PARAMETER
+  
+  // LOGISTIC EMPTY GUT MODEL //
+  
+  real omega;                          // INTERCEPT       
+  real omegaTL;                        // EFFECT OF CONTINUOUS COVARIATE
   
 }
 transformed parameters {
@@ -22,6 +30,7 @@ transformed parameters {
   vector[N] B;                          // BETA SHAPE PARAMETER 2
   vector[N] LP;                         // UNTRANSFORMED LINEAR PREDICTOR
   vector[N] mu;                         // TRANSFORMED LINEAR PREDICTOR
+  vector[N] LP_omega;
   
   for (i in 1:N) {
     for (s in 1:S) {
@@ -38,6 +47,16 @@ transformed parameters {
     B[i] = (1 - mu[i])*phi;
     
   }
+
+
+  // LOGISTIC EMPTY GUT MODEL //
+
+  for (i in 1:N){
+    
+    LP_omega[i] = omega + omegaTL*TL[i];
+    
+  }
+  
 }
 
 model {
@@ -45,6 +64,7 @@ model {
 // LIKELIHOOD COMPONENT --------------------------------------------------------
   
   target += beta_lpdf(GF | A , B); # EXPLICIT STATEMENT
+  Z      ~ bernoulli(inv_logit(LP_omega));
 
 // PRIOR COMPONENT -------------------------------------------------------------
   
@@ -54,15 +74,30 @@ model {
   sigma_beta ~ cauchy(0,1);
   betaTL     ~ normal(0,2);
   
+  omega      ~ normal(0,2);
+  omegaTL    ~ normal(0,2);
+  
 }
 
 generated quantities {
   
+  // BETA MODEL //
+  
   vector[S] y_hat;              // SITE MEANS
   vector[S] dflc;               // SCALED DEFLECTION PARAMETERS
   vector[S] cnt[(S-1)];         // CONTRASTS FOR PAIRWISE COMPARISONS
-  real      mu_GF;
+  real      mu_GF;              // MODELLED MEAN GUT FULLNESS
+  
+  // LOGISTIC EMPTY GUT MODEL //
+  
+  real theta;                  // PREDICTED EMPTY GUT PROBABILITY
+  
+  for (i in 1:N) {
+  
+    theta = inv_logit(omega + omegaTL*TL[i]);
 
+  }
+  
   for (i in 1:N) {
     for (s in 1:S) {
       
@@ -77,7 +112,7 @@ generated quantities {
     }
   }
   
-  mu_GF = mean(y_hat);      // MEAN OF MODELLED GUT FULLNESS
+  mu_GF = mean(y_hat)*(1-theta);      // MEAN OF MODELLED GUT FULLNESS
   
   for (s in 1:S) {
 

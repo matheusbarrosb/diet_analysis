@@ -20,7 +20,7 @@ LAGRHO <- diet.raw %>%
 
 # FILTER SITES OF INTEREST
 LAGRHO <- LAGRHO %>%
-  group_by(`Fish ID`, Year, Treatment, Length, Site, `Wet Weight`,`Gut weight`) %>%
+  group_by(`Fish ID`, Year, Treatment, Length, Site, `Wet Weight`,`Gut weight`, Group) %>%
   summarize(count = n()) %>%
   filter(Site %in% c("AM", "DR", "HWP", "LB", "NEPaP", "SA"))
 
@@ -30,13 +30,16 @@ GF <- (as.numeric(LAGRHO$`Gut weight`)/LAGRHO$`Wet Weight`) # response variable
 site_treat <- as.factor(interaction(LAGRHO$Site, LAGRHO$Treatment, sep = "-"))
 site <- as.numeric(as.factor(ordered(site_treat))) # categorical explanatory variable
 S <- length(unique(site)) # number of sites
+Z <- ifelse(LAGRHO$Group == "Empty", 1, 0) # empty gut indicator
+
 
 # REMOVE NAs
-data.df.LAGRHO <- data.frame(GF, site, TL)
+data.df.LAGRHO <- data.frame(GF, Z, site, TL)
 data.df.LAGRHO <- na.exclude(data.df.LAGRHO)
 
 # PUT DATA INTO A LIST FOR STAN
 stan_data_LAGRHO <- list(GF    = data.df.LAGRHO$GF, # gut fullness, response
+                         Z     = data.df.LAGRHO$Z, # empty gut indicator
                          site  = data.df.LAGRHO$site, # site, categorical explanatory variable
                          TL    = data.df.LAGRHO$TL, # continuous covariate
                          N     = length(data.df.LAGRHO$GF), # number of observations
@@ -52,6 +55,8 @@ ancova_fit_LAGRHO <- rstan::stan(file = "stan/betareg.stan", data = stan_data_LA
 print(ancova_fit_LAGRHO, pars = "dflc")
 print(ancova_fit_LAGRHO, pars = "y_hat")
 print(ancova_fit_LAGRHO, pars = "cnt")
+print(ancova_fit_LAGRHO, pars = "theta")
+
 
 mcmc_LAGRHO <- ggs(ancova_fit_LAGRHO) # convert to mcmc dataframe
 
@@ -240,7 +245,7 @@ MICUND <- diet.raw %>%
   filter(diet.raw$`Species code` == "MICUND")
 
 MICUND <- MICUND %>%
-  group_by(`Fish ID`, Year, Treatment, Length, Site, `Wet Weight`,`Gut weight`) %>%
+  group_by(`Fish ID`, Year, Treatment, Length, Site, `Wet Weight`,`Gut weight`, Group) %>%
   summarize(count = n()) %>%
   filter(Site %in% c("CI", "NEPaP", "SA"))
 
@@ -249,11 +254,13 @@ GF <- (as.numeric(MICUND$`Gut weight`)/MICUND$`Wet Weight`)
 site_treat <- factor(interaction(MICUND$Site, MICUND$Treatment, sep = "-"))
 site <- as.numeric(as.factor(site_treat)) 
 S <- length(unique(site))
+Z <- ifelse(MICUND$Group == "Empty", 1, 0)
 
-data.df <- data.frame(GF, site, TL)
+data.df <- data.frame(GF, Z, site, TL)
 data.df <- na.exclude(data.df)
 
-stan_data_MICUND <- list(GF    = data.df$GF, 
+stan_data_MICUND <- list(GF    = data.df$GF,
+                         Z     = data.df$Z,
                          site  = data.df$site,
                          TL    = data.df$TL,
                          N     = length(data.df$GF),
@@ -401,15 +408,16 @@ BAICHR <- diet.raw %>%
   filter(diet.raw$`Species code` == "BAICHR")
 
 BAICHR <- BAICHR %>%
-  group_by(`Fish ID`, Year, Treatment, Length, Site, `Wet Weight`,`Gut weight`) %>%
+  group_by(`Fish ID`, Year, Treatment, Length, Site, `Wet Weight`,`Gut weight`, Group) %>%
   summarize(count = n()) %>%
   filter(Site %in% c("CI", "NEPaP", "SA"))
 
 TL <- BAICHR$Length/mean(BAICHR$Length, na.rm = TRUE)
 GF <- (as.numeric(BAICHR$`Gut weight`)/BAICHR$`Wet Weight`)
+Z <- ifelse(BAICHR$Group == "Empty", 1, 0)
 site_treat <- factor(interaction(BAICHR$Site, BAICHR$Treatment, sep = "-"))
 
-data.df <- data.frame(GF, TL, site_treat)
+data.df <- data.frame(GF, Z, TL, site_treat)
 data.df <- na.exclude(data.df)
 
 data.df <- data.df %>% 
@@ -421,6 +429,7 @@ data.df$site_treat <- factor(data.df$site_treat,
 data.df$GF <- ifelse(data.df$GF > 0.2, 0.104, data.df$GF)
 
 stan_data_BAICHR <- list(GF = data.df$GF, 
+                         Z = data.df$Z,
                          site = as.numeric(as.factor(data.df$site_treat)),
                          TL = data.df$TL,
                          N = length(data.df$GF),
