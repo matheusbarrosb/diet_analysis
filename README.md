@@ -16,8 +16,8 @@ This is a repository that contains data and code to reproduce all analyses and f
 - `plotOntoShifts.R`: function to plot ontogenetic shifts in PoE
 
 ### R files
-- `analyses`: contains the framework to gather data, run, and plot logistic model results
-- `Gut_fullness_modeling`: contains the framework to gather data, run, and plot mixed beta regression model results
+- `analysesLogitReg.R`: contains the framework to gather data, run, and plot logistic model results
+- `analysesBetaReg.R`: contains the framework to gather data, run, and plot mixed beta regression model results
 
 
 
