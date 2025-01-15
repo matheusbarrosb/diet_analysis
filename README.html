@@ -357,13 +357,6 @@ display: none;
 inference: comparing juvenile fish diets among restored seascapes”</h2>
 <p>This is a repository that contains data and code to reproduce all
 analyses and figures in the manuscript. Each file is as follows:</p>
-<div id="folders" class="section level3">
-<h3>Folders</h3>
-<ul>
-<li><code>data/</code>: contains all data used in the analyses</li>
-<li><code>code/</code>: contains all code used to run the analyses</li>
-</ul>
-</div>
 <div id="stan-files" class="section level3">
 <h3>Stan Files</h3>
 <ul>
@@ -376,27 +369,53 @@ beta regression model used to estimate gut fullness</li>
 <div id="r-functions" class="section level3">
 <h3>R functions</h3>
 <ul>
-<li><code>plotPostPrior.R</code>: function to plot priors vs. posteriors
-for the mixed beta regression model</li>
-<li><code>plotPostPriorLogit.R</code>: function to plot priors
+<li><code>functions/plotPostPrior.R</code>: function to plot priors
+vs. posteriors for the mixed beta regression model</li>
+<li><code>functions/plotPostPriorLogit.R</code>: function to plot priors
 vs. posteriors for the logistic regression model</li>
-<li><code>plotOntoShifts.R</code>: function to plot ontogenetic shifts
-in PoE</li>
+<li><code>functions/plotOntoShifts.R</code>: function to plot
+ontogenetic shifts in PoE</li>
 </ul>
 </div>
 <div id="r-files" class="section level3">
 <h3>R files</h3>
 <ul>
-<li><code>analyses</code>: contains the framework to gather data, run,
-and plot logistic model results</li>
-<li><code>Gut_fullness_modeling</code>: contains the framework to gather
-data, run, and plot mixed beta regression model results</li>
+<li><code>analyses/analysesLogitReg.R</code>: contains the framework to
+gather data, run, and plot logistic model results</li>
+<li><code>analyses/analysesBetaReg.R</code>: contains the framework to
+gather data, run, and plot mixed beta regression model results</li>
 </ul>
 </div>
 <div id="model-specification" class="section level3">
 <h3>Model specification</h3>
-<div id="bayesian-mixed-beta-regression" class="section level4">
-<h4>Bayesian Mixed Beta Regression</h4>
+<div id="mixed-effects-beta-regression" class="section level4">
+<h4>Mixed effects beta regression</h4>
+<p>Gut fullness as a % body weight is assumed to follow a beta
+distribution with parameters A and B. The A and B parameters are defined
+by a precision term (<span class="math inline">\(\phi\)</span>) that is
+shared across groups and a linear predictor (<span class="math inline">\(\mu_{[i]}\)</span>). The linear predictor contains
+a GLM whose parameters describe the overall mean (<span class="math inline">\(\beta_{0}\)</span>), the effect of site
+(site-specific random effects) (<span class="math inline">\(\beta_{1[s]}\)</span>), and the effect of the
+total length (<span class="math inline">\(\beta_{TL}\)</span>).</p>
+<p><span class="math display">\[ GF_{[i]} \sim beta(A,B)  \]</span></p>
+<p><span class="math display">\[ A = \phi*\mu_{i} \]</span></p>
+<p><span class="math display">\[ B = \phi*(1-\mu_{[i]})  \]</span></p>
+<p><span class="math display">\[ \mu_{[i]} = inverse-logit(\beta_{0} +
+\beta_{1[s]} + \beta_{TL}TL_{[i]})  \]</span></p>
+</div>
+<div id="logistic-regression-model" class="section level4">
+<h4>Logistic regression model</h4>
+<p>Prey Probabilities of Encounter (PoEs) are modelled using a random
+effects logistic regression model. We assume <span class="math inline">\(Y_{[i]}\)</span> is a Bernoulli random variable
+indicating presence (1) or absence (0) of a given prey with probability
+<span class="math inline">\(PoE\)</span>. The probability of encounter
+is modelled as a logistic function of a linear predictor containing an
+intercept <span class="math inline">\(\alpha\)</span>, site-specific
+random effects <span class="math inline">\(\beta_{[s]}\)</span>, and the
+effect of total length <span class="math inline">\(\beta_{TL}\)</span>.</p>
+<p><span class="math display">\[ Y_{[i]} ~ Bernoulli(PoE) \]</span></p>
+<p><span class="math display">\[ log(\frac{PoE}{1-PoE}) = \alpha +
+\beta_{[s]} + \beta_{TL_{[i]}}  \]</span></p>
 </div>
 </div>
 </div>
